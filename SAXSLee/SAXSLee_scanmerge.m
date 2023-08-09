@@ -8,7 +8,7 @@ hAxes = findobj(hFigSAXSLee,'Tag','SAXSLee_Axes');
 hLine = findobj(hAxes,'Type','line');
 hObject = findobj(0, 'Tag', 'toolbarMerge');
 
-if ~strcmp(get(hObject, 'State'), 'on');
+if ~strcmp(get(hObject, 'State'), 'on')
     hLine = findall(hAxes,'Type','line');
     for mm = 1:numel(hLine)
          if SAXSLee_ismerged(hLine(mm))
@@ -28,44 +28,12 @@ if isempty(hLine) || length(hLine) <= 1
     return;
 end
 
-
 if isfield(settings, 'atBeamline')
-    if strcmp(settings.atBeamline, '12IDB')
-        Beamline = '12IDB';
-    end
-    if strcmp(settings.atBeamline, 'PLS9A')
-        Beamline = 'PLS9A';
-    end
+    Beamline = settings.atBeamline;
 else
     Beamline = 'Unknown';
 end
 
-% --- get tags of lines and remove datatipmarkers from hLine
-% tempHLine = [];
-% lineTags = {};
-% linetype = {};
-% FN = {};
-% k = 1;
-% for iLine = 1:length(hLine)
-%     if strfind(get(hLine(iLine),'Tag'), 'BACK: ')
-%         continue;
-%     end
-%     if strfind(get(hLine(iLine),'Tag'), 'FF: ')
-%         continue;
-%     end
-%     if getappdata(hLine(iLine), 'ismerged')
-%         continue;
-%     end
-%     if ~strcmp(get(hLine(iLine),'Tag'),'DataTipMarker')
-%         tempHLine(k) = hLine(iLine);
-%         lineTags{k} = get(hLine(iLine),'Tag');
-%         [~, f, e] = fileparts(lineTags{k});
-%         FN{k} = f;
-%         linetype{k} = e;
-%         k = k + 1;
-%     end
-% end
-% New way
 isData = ~strcmp(get(hLine,'Tag'),'DataTipMarker');
 isData = isData & cellfun('isempty', strfind(get(hLine,'Tag'), 'BACK: '));
 isData = isData & cellfun('isempty', strfind(get(hLine,'Tag'), 'FF: '));
@@ -182,14 +150,12 @@ end
                 else
                     pth = settings.path;
                 end
-            case 'PLS9A'
-                pth = settings.path;
             otherwise
                 pth = settings.path;
         end
         
             filename = fullfile(pth, settings.backsubtractedDir, tg);
-            if ~isdir(fullfile(pth, settings.backsubtractedDir))
+            if ~isfolder(fullfile(pth, settings.backsubtractedDir))
                 mkdir(fullfile(pth, settings.backsubtractedDir));
             end
             save(filename, 'nd', '-ascii');

@@ -107,12 +107,7 @@ else
 end
 
 if isfield(settings, 'atBeamline')
-    if strcmp(settings.atBeamline, '12IDB')
-        Beamline = '12IDB';
-    end
-    if strcmp(settings.atBeamline, 'PLS9A')
-        Beamline = 'PLS9A';
-    end
+    Beamline = settings.atBeamline;
 else
     Beamline = 'Unknown';
 end

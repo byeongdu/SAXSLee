@@ -31,7 +31,8 @@ if strcmp(get(hAxes, 'Nextplot'), 'replace')
 else
 %    NoldL = numel(findobj(hAxes, 'type', 'line'));
 end
-fn = cell(numel(setall{Nsel}.scan.selectionIndex), 2);
+
+fn = cell(numel(setall{Nsel}.scan.selectionIndex), 1);
 
 for iSelection = 1:numel(setall{Nsel}.scan.selectionIndex)
     % --- if ydata has negative data,then ydataError = 0
@@ -39,6 +40,7 @@ for iSelection = 1:numel(setall{Nsel}.scan.selectionIndex)
     cfile = setall{Nsel}.scan.filen{setall{Nsel}.scan.selectionIndex(iSelection)};
     if isfield(settings, 'atBeamline')
         if strcmp(settings.atBeamline, '12IDB')
+%            fn = cell(numel(setall{Nsel}.scan.selectionIndex), 2);
             % file extension is now changed to 'dat'
             [~,fbody,~] = fileparts(cfile);
             cfile = [fbody '.dat'];
@@ -62,6 +64,7 @@ for iSelection = 1:numel(setall{Nsel}.scan.selectionIndex)
             end
         end
         if strcmp(settings.atBeamline, '12IDC')
+%            fn = cell(numel(setall{Nsel}.scan.selectionIndex), 1);
             % file extension is now changed to 'dat'
             [~,fbody,~] = fileparts(cfile);
             cfile = [fbody '.dat'];

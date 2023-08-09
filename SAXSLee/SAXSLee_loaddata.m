@@ -19,40 +19,33 @@ for iSelection=1:Ndata
     for mm = 1:Ndet
         fn = fnc{iSelection, mm};
 
-        % Loading file.
-        % Does the file exist?
-
         Notloaded = 1;
-%        loadCount = 1;
-%        while (Notloaded) 
-            try
-                [hdr, tmp] = hdrload(fn);
-                [~,ntmp] = size(tmp);
-                if ntmp == 2
-                    tmp(:,3) = sqrt(abs(tmp(:,2)));
-                else
-                    if ~isempty(option)
-                        x = tmp(:, option.xcol);
-                        y = tmp(:, option.ycol);
-                        if isfield(option, 'yerrcol')
-                            yerr = tmp(:, option.yerrcol);
-                        else
-                            yerr = sqrt(abs(y));
-                        end
-                        tmp = [x, y, yerr];
+        try
+            [hdr, tmp] = hdrload(fn);
+            [~,ntmp] = size(tmp);
+            if ntmp == 2
+                tmp(:,3) = sqrt(abs(tmp(:,2)));
+            else
+                if ~isempty(option)
+                    x = tmp(:, option.xcol);
+                    y = tmp(:, option.ycol);
+                    if isfield(option, 'yerrcol')
+                        yerr = tmp(:, option.yerrcol);
+                    else
+                        yerr = sqrt(abs(y));
                     end
+                    tmp = [x, y, yerr];
                 end
-                Notloaded = 0;
-            catch
-%                loadCount = loadCount + 1;
             end
-%            if loadCount > 20
-%                break
-%            end
-%             if Notloaded
-%                 pause(0.3)
-%             end
-%        end
+            Notloaded = 0;
+        catch
+            if exist(fn, 'file')
+                fprintf('\n\n\nFile %s exists.\n\n\n', fn);
+                fprintf('\n\n\nError using hdrload of %s.\n\n\n', fn);
+            else
+                fprintf('\n\n\nFile %s doesnt exist.\n\n\n', fn);
+            end
+        end
 
         [fpath,f1,f2] = fileparts(fn);
         cfile = [f1, f2];

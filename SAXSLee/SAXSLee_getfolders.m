@@ -23,21 +23,3 @@ function [pth, backsubdir] = SAXSLee_getfolders(settings, filepath, dataType)
     else
         pth = filepath;
     end
-    
-%     switch Beamline
-%         case '12IDB'
-%             if numel(dataType)>1
-%                 pth = [settings.path, filesep, dataType];
-%                 %pth = settings.path;
-%             else
-%                 pth = settings.path;
-%             end
-%         case 'PLS9A'
-%             pth = settings.path;
-%         otherwise
-%             try
-%                 pth = settings.path;
-%             catch
-%                 pth = [];
-%             end
-%     end

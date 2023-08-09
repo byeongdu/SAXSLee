@@ -191,6 +191,11 @@ if isLinecut
     imgname(strfind(imgname, '-')) = '_';
 end
 [~, fb] = fileparts(imgname);
+if (contains(fb, '#') && contains(fb, ':'))
+    p = strfind(fb, ':');
+    fb(1:p(1)+3) = [];
+end
+    
 fb = [fb, '.*'];
 c = specSAXSn2(SPECfile, fb);
 
@@ -328,15 +333,22 @@ for i = 1:numel(hdl)
 end    
 assignin('base', 'SLout', SL_out);
 cprintf('_blue', 'Done.\n');
-figure;
+
 if isfield(SL_out, 'info')
-    t = cellfun(@(x) x.Time, SL_out.info);
-    plot(t-t(end), SL_out.Q, 'ro-');
-    xlabel('Time (s)', 'fontsize', 15);
+    if isfield(SL_out.info, 'Time')
+        t = cellfun(@(x) x.Time, SL_out.info);
+        figure;
+        plot(t-t(end), SL_out.Q, 'ro-');
+        xlabel('Time (s)', 'fontsize', 15);
+    end
 else
-    plot(SL_out.fileindex, SL_out.Q, 'ro-')
-    xlabel('Fileindex', 'fontsize', 15);
+    if ~isempty(SL_out.fileindex)
+        figure;
+        plot(SL_out.fileindex, SL_out.Q, 'ro-')
+        xlabel('Fileindex', 'fontsize', 15);
+    end
 end
+
 ylabel('Invariant', 'fontsize', 15);
 cprintf('_blue', 'If you want to extract a particular field from SLout,\n')
 cprintf('_blue', 'try like, cellfun(@(x) x.Exposuretime, SLout)\n');

@@ -180,8 +180,12 @@ function pb_refresh_backsub_Callback(hObject, eventdata, handles)
     refscan = listbacksubdir(handles, filterstr);
     if isempty(refscan)
         set(handles.ref_listbox, 'String', '');
+        handles.ref_listbox.Value = nan;
     else
         set(handles.ref_listbox, 'String', {refscan.fn});
+        if (numel(refscan) > handles.ref_listbox.Value) | isnan(handles.ref_listbox.Value)
+            handles.ref_listbox.Value = 1;
+        end
     end
     assignin('base', 'refscan', refscan);
 

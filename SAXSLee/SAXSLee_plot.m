@@ -48,17 +48,21 @@ for i=1:Ndata
                 fpath = '';
             end
         else
-            if ~isfield(scan{i}, 'colData')
+            try
+                if ~isfield(scan{i}, 'colData')
+                    fprintf('%s was not loaded.\n', scan{i}.WTag)
+                    continue
+                end
+                tmp = scan{i}.colWData;
+                cfile = scan{i}.WTag;
+                wx = Ndata;
+                if isfield(scan{i}, 'Wpath')
+                    fpath = scan{i}.Wpath;
+                else
+                    fpath = '';
+                end
+            catch
                 fprintf('%s was not loaded.\n', scan{i}.WTag)
-                continue
-            end
-            tmp = scan{i}.colWData;
-            cfile = scan{i}.WTag;
-            wx = Ndata;
-            if isfield(scan{i}, 'Wpath')
-                fpath = scan{i}.Wpath;
-            else
-                fpath = '';
             end
         end
         if strcmp(headerTag, 'REF')

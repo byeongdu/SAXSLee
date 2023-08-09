@@ -7,23 +7,6 @@ hFigSAXSLee = evalin('base', 'SAXSLee_Handle');
 hAxes = findobj(hFigSAXSLee,'Tag','SAXSLee_Axes');
 hLine = findobj(hAxes,'Type','line');
 
-%hObject = findobj(0, 'Tag', 'toolbarMerge2');
-%% This needs when the merge button is a toggle button instead of pushbutton.
-% if ~strcmp(get(hObject, 'State'), 'on');
-%     hLine = findall(hAxes,'Type','line');
-%     
-%     for mm = 1:numel(hLine)
-%         if ~ischar(get(hLine(mm), 'MarkerFaceColor'))
-%             if sum(get(hLine(mm), 'MarkerFaceColor')== [1,0,1])
-%                  delete(hLine(mm));
-%             end
-%         end
-%     end
-%     curvelegend(hFigSAXSLee)
-%     return
-% end
-
-%%
 % --- get merge mode
 settings = getappdata(hFigSAXSLee,'settings');
 merge = settings.merge;
@@ -35,29 +18,10 @@ end
 
 
 if isfield(settings, 'atBeamline')
-    if strcmp(settings.atBeamline, '12IDB')
-        Beamline = '12IDB';
-    end
-    if strcmp(settings.atBeamline, 'PLS9A')
-        Beamline = 'PLS9A';
-    end
+    Beamline = settings.atBeamline ;
 else
     Beamline = 'Unknown';
 end
-
-
-% % --- get tags of lines and remove datatipmarkers from hLine
-% tempHLine = [];
-% lineTags = {};
-% for iLine = 1:length(hLine)
-%     if ~strcmp(get(hLine(iLine),'Tag'),'DataTipMarker')
-%         tempHLine(length(tempHLine)+1) = hLine(iLine);
-%         lineTags{length(lineTags)+1} = get(hLine(iLine),'Tag');
-%     end
-% end
-% hLine = tempHLine';
-% lineTags = fliplr(lineTags);
-
 
 isData = ~strcmp(get(hLine,'Tag'),'DataTipMarker');
 isData = isData & cellfun('isempty', strfind(get(hLine,'Tag'), 'BACK: '));
@@ -111,54 +75,10 @@ switch Beamline
         hWAXS = okhLine(isW);
         hnone = hLine(~isTagNameSW);
         clear oklineTags okhLine
-%         if ~isempty(fstr > 2)
-%             switch fstr(1)
-%                 case 'S'
-%                     hSAXS = [hSAXS hLine(mm)];
-%                 case 'W'
-%                     hWAXS = [hWAXS hLine(mm)];    
-%                 otherwise
-%                     hnone = [hnone hLine(mm)];
-%             end
-%         else
-%             hnone = [hnone hLine(mm)];
-%         end
+
     otherwise
         hnone = hLine;
 end
-
-% for mm=1:length(hLine)
-%     fstr = get(hLine(mm),'tag');
-%     if ~isempty(strfind(fstr, 'REF#'))
-%         hRef = [hRef hLine(mm)];
-%     else
-%         switch Beamline
-%             case '12IDB'
-%                 if ~isempty(fstr > 2)
-%                     switch fstr(1)
-%                         case 'S'
-%                             hSAXS = [hSAXS hLine(mm)];
-%                         case 'W'
-%                             hWAXS = [hWAXS hLine(mm)];    
-%                         otherwise
-%                             hnone = [hnone hLine(mm)];
-%                     end
-%                 else
-%                     hnone = [hnone hLine(mm)];
-%                 end
-%             case 'PLS9A'
-%                 hnone = [hnone hLine(mm)];
-%             otherwise
-%                 hnone = [hnone hLine(mm)];
-%         end
-%     end
-% end
-
-%hLs{1} = hRef;
-%hLs{2} = hSAXS;
-%hLs{3} = hWAXS;
-%hLs{4} = hnone;
-
 
 switch Beamline
     case '12IDB'
@@ -166,21 +86,15 @@ switch Beamline
         hLs{2} = hSAXS;
         hLs{3} = hWAXS;
         hLs{4} = hnone;
-    case 'PLS9A'
-        hLs{1} = hRef;
-        hLs{2} = hnone;
     otherwise
         hLs{1} = hRef;
         hLs{2} = hnone;
 end
 
 
-%xlabel_str = get(get(hAxes,'XLabel'),'String');
-%ylabel_str = get(get(hAxes,'YLabel'),'String');
-
 %cla(hAxes);
 
-for kkk=2:4
+for kkk=2:numel(hLs)
     hLine = hLs{kkk};
     if length(hLine) < 1
         break
@@ -318,57 +232,24 @@ end
 fn = scanTag{1}(1:TagIndx-1);
 indspace = strfind(fn, ' ');
 fn(indspace) = '_';
-% indx = [indx, indx2];
-% NIndx = numel(scanTag{1});
-% loopend = 0;
-% if ~isempty(indx)
-%     indx = unique(indx);
-%     for kk=1:numel(indx)
-%         if loopend == 1
-%             break;
-%         end
-%         if indx(kk) < TagIndx
-%             NIndx = indx(kk);
-%         else
-%             loopend = 1;
-%         end
-%     end
-% end
-% if NIndx < TagIndx
-%     TagIndx = NIndx;
-% end
+
 % --- clear previous plot and plot merged data
 if isbsub
     mergeLineTag = [fn,'.bsub_avg'];
 else
     mergeLineTag = [fn,'.avg'];
 end
-%if length(scanIndex) == 1
-%    mergeLineTag    = ['SAXSLeeMerge',num2str(scanIndex)];
-%else
-%    mergeLineTag    = ['SAXSLeeMerge',num2str(min(scanIndex)),'To',num2str(max(scanIndex))];
-%end
+
 
 switch Beamline
     case '12IDB'
-        pth = settings.path;
-%         switch kkk
-%             case 2
-%                 pth = [settings.path, filesep, 'SAXS'];
-%             case 3
-%                 pth = [settings.path, filesep, 'WAXS'];
-%             case 4
-%                 pth = settings.path;
-%         end
-        
-    case 'PLS9A'
         pth = settings.path;
     otherwise
         pth = settings.path;
 end
 
 filename = fullfile(pth, settings.backsubtractedDir, mergeLineTag);
-if ~isdir(fullfile(pth, settings.backsubtractedDir))
+if ~isfolder(fullfile(pth, settings.backsubtractedDir))
     mkdir(fullfile(pth, settings.backsubtractedDir));
 end
 nd = mergeData;
@@ -392,23 +273,8 @@ nd = mergeData;
     fclose(fid);
     dlmwrite(filename, nd,'delimiter','\t','precision','%.8e', '-append');
 
-%save(filename, 'nd', '-ascii');
-%fprintf('%s%s%s is saved\n', settings.backsubtractedDir,filesep,mergeLineTag);
-fprintf('%s is saved\n', filename);
+    fprintf('%s is saved\n', filename);
 
-%% This is needed when the merge button is a togglebutton.
-% hNewLine = line('Parent',hAxes,...
-%         'XData',mergeData(:,1)',...
-%         'YData',mergeData(:,2)',...
-%         'Tag',mergeLineTag);
-%  %nd = mergeData;
-% setappdata(hNewLine,'yDataError',mergeData(:,3));
-% set(hNewLine,...
-%     'Color','b',...
-%     'LineStyle','-',...
-%     'Marker','o',...
-%     'MarkerSize',3,...
-%     'MarkerFaceColor','m');
 end
 
 end

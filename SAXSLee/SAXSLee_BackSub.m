@@ -296,14 +296,6 @@ Nsel = get(findobj(hFigSAXSLee, 'tag', 'SAXSLee_PopupmenuX'), 'value');
 settings = setall{Nsel}.settings;
 [pth, backsubdir] = SAXSLee_getfolders(settings);
 backsubpath = fullfile(pth, filesep, backsubdir);
-% if isfield(settings, 'atBeamline')
-%     if strcmp(settings.atBeamline, '12IDB')
-%         %averagedpath = fullfile(setpath, 'SAXS', filesep, 'Averaged');
-%         backsubpath = fullfile(pth, 'SAXS', filesep, backsubdir);
-%     else
-%         backsubpath = fullfile(pth, filesep, backsubdir);
-%     end
-% end
 
 refscan = [];
 filterstr = get(handles.ed_filter_backsub, 'string');
