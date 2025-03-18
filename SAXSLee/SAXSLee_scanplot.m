@@ -63,15 +63,37 @@ for iSelection = 1:numel(setall{Nsel}.scan.selectionIndex)
                     end
             end
         end
+%         if strcmp(settings.atBeamline, '12IDC')
+% %            fn = cell(numel(setall{Nsel}.scan.selectionIndex), 1);
+%             % file extension is now changed to 'dat'
+%             [~,fbody,~] = fileparts(cfile);
+%             cfile = [fbody '.dat'];
+%             mpthSAXS = 'SAXS';
+%             fn1 = fullfile(settings.path, mpthSAXS, settings.averageDir, cfile);
+%             fn{iSelection, 1} = fn1;
+%             settings.averageFileExt = '.dat';
+%         end
         if strcmp(settings.atBeamline, '12IDC')
-%            fn = cell(numel(setall{Nsel}.scan.selectionIndex), 1);
-            % file extension is now changed to 'dat'
             [~,fbody,~] = fileparts(cfile);
             cfile = [fbody '.dat'];
-            mpthSAXS = 'SAXS';
-            fn1 = fullfile(settings.path, mpthSAXS, settings.averageDir, cfile);
-            fn{iSelection, 1} = fn1;
-            settings.averageFileExt = '.dat';
+            switch lower(cfile(1))
+                case 's'
+                    mpthSAXS = 'SAXS';
+                    mpthWAXS = 'WAXS';
+                    fn1 = fullfile(settings.path, mpthSAXS, settings.averageDir, cfile);
+                    fn2 = fullfile(settings.path, mpthWAXS, settings.averageDir, ['W', cfile(2:end)]);
+                    fn{iSelection, 1} = fn1;
+                    fn{iSelection, 2} = fn2;
+                    settings.averageFileExt = '.dat';
+                case 'p' % PE
+                    mpthSAXS = 'PE';
+                    fn1 = fullfile(settings.path, mpthSAXS, settings.averageDir, cfile);
+                    fn{iSelection, 1} = fn1;
+                    settings.averageFileExt = '.dat';
+                    if size(fn, 2) > 1
+                        fn(:, 2) = [];
+                    end
+            end
         end
         if strcmp(settings.atBeamline, 'PLS9A')
             % file extension is now changed to 'dat'

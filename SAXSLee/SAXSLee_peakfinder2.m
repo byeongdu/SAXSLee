@@ -447,7 +447,7 @@ function savedspacings(varargin)
             fid = fopen(fn, 'w');
             fprintf(fid, '**** %s with factor %0.5e ****\n', filename, f);
             fprintf(fid, '%i  %s\n', Npeak, '3 1 1 1 1 0 0');
-            fprintf(fid, '%0.3f %0.3f %0.3f 0.0 %0.3f 0 0\n', maxd*3, maxd*3, maxd*3, 5*maxd^3);
+            fprintf(fid, '%0.3f %0.3f %0.3f 0.0 %0.3f 0 0\n', maxd*4, maxd*4, maxd*4, 20*maxd^3);
             fprintf(fid, '%s\n', '0 0 0 0');
             fprintf(fid, '%s\n', '1.0 0 0 0 0');
             for i=1:Npeak
@@ -560,6 +560,9 @@ end
     end
 
     function setfindpeaks(varargin)
+        if numel(varargin)>0
+            obj = varargin{end};
+        end
         %obj = varargin{1};
         obj = findobj(gcbf, 'tag', 'SSL_MenuSetfindPeaksManual');
         if strcmp(get(obj, 'tag'), 'SSL_MenuSetfindPeaksManual')
@@ -645,7 +648,7 @@ end
             'Maximum Iteration for Fitting'};
         dlgtitle = 'Fit Parameters';
         op = getappdata(gcbf, 'peakfitoption');
-        dq_default = 0.01;
+        dq_default = 0.002;
         itr_default = 200;
         if isempty(op)
             definput = {num2str(dq_default), num2str(itr_default)}; 
@@ -1668,9 +1671,6 @@ function fitPeaks(varargin)
     q = get(h, 'xdata');%q = q(:);
     Iq = get(h, 'ydata');%Iq = Iq(:);
 
-%    min_delta_peak = min([min_delta_peak, dq]);
-    
-    
     refit = 0;
     i = 1;
     
@@ -1698,7 +1698,9 @@ function fitPeaks(varargin)
             pfit = getappdata(hIq, 'fit');
             
             
-            min_delta_peak = abs(hIq.XData(end)-hIq.XData(1))/2;
+            x_range = sort([hIq.XData(1), hIq.XData(end)]);
+            min_delta_peak = abs(hIq.XData(end)-hIq.XData(1))/5;
+            min_delta_peak = min([min_delta_peak, dq]);
 
             if k>1
                 ppos = p(:,2);
@@ -1709,6 +1711,7 @@ function fitPeaks(varargin)
                     fit.isidentical(k) = ind;
                 end
             end
+
             if fit.isidentical(k)~=0
                 continue
             end
@@ -1736,8 +1739,16 @@ function fitPeaks(varargin)
                             centerUB = ud(2)+abs(ud(3));
                         else
                             %xd = hIq.XData;
-                            centerLB = ud(2)-abs(min_delta_peak)*2;
-                            centerUB = ud(2)+abs(min_delta_peak)*2;
+                            centerLB = ud(2)-min_delta_peak;
+                            %centerLB = ud(2)+(x_range(1)-ud(2))/5;
+                            if centerLB < x_range(1)
+                                centerLB = x_range(1);
+                            end
+                            centerUB = ud(2)+min_delta_peak;
+                            %centerUB = ud(2)+(x_range(2)-ud(2))/5;
+                            if centerUB>x_range(2)
+                                centerUB = x_range(2);
+                            end
 %                             centerLB = ud(2)-abs(min_delta_peak);
 %                             centerUB = ud(2)+abs(min_delta_peak);
                         end
@@ -1860,6 +1871,7 @@ function fitPeaks(varargin)
                     dt = [dt; INLP(((tmp-1)*3+1):(tmp*3)), INLP((numel(peak)*3+1):end)];
                 end
             case 'vfit'
+                if fit.NdataSet == 1
                 if numel(NLPstart)>8
                     sg1 = min(NLPstart([3,7]));
                     sg2 = min(NLPstart([4,8]));
@@ -1885,6 +1897,7 @@ function fitPeaks(varargin)
                     B = [0.00001;0.00001];
 %                      A = [0, 0, 0, 1, 0, 0, 0, -1, 0, 0];
 %                      B = [0];
+                end
                 end
                 INLP = fminsearchcon(@(x) vfit(x, yv, xv, err),NLPstart,LB,UB, A, B, [], options);
                 a = [];
