@@ -7,6 +7,8 @@ function SAXSLee_dataControlmenu(obj)
     uimenu(hcmenu,'Label','Set as Form Factor','Callback',@uimenu_setFF);
     uimenu(hcmenu,'Label','Trim data','Callback',@uimenu_trimdata);
     uimenu(hcmenu,'Label','Power law slope','Callback',@uimenu_powerslope);
+    uimenu(hcmenu,'Label','Show filename','Callback',@uimenu_showfilename);
+    uimenu(hcmenu,'Label','Indexing','Callback',@uimenu_indexing);
     uimenu(hcmenu,'Label','Remove','Callback',@uimenu_remove);
     uimenu(hcmenu,'Label','Sq to Gr','Callback',@uimenu_calculateGr);
 %     uimenu(hcmenu,'Label','q_{t,z} cut(V)','Callback',{@uimenu_linecut, 'v1'});
@@ -57,6 +59,58 @@ function SAXSLee_dataControlmenu(obj)
             end
         end
         delete([gco, h]);
+
+    function uimenu_indexing(varargin)
+        h = gco;
+        if isempty(h) || ~ishandle(h)
+            return
+        end
+        xd = get(h, 'XData');
+        yd = get(h, 'YData');
+        if isempty(xd) || isempty(yd)
+            return
+        end
+
+        fig = figure('Name','Indexing Data','NumberTitle','off','Tag','Indexing_Plot');
+        ax = axes('Parent',fig);
+        plot(ax, xd, yd, 'Tag','indexingdata');
+        set(ax, 'XScale', 'linear');
+        set(ax, 'YScale', 'log');
+        xlabel(ax, 'q (1/\AA)');
+        ylabel(ax, 'I(q) (a.u.)');
+        grid(ax, 'on');
+        box(ax, 'on');
+
+        if exist('indexing','file') == 2
+            indexing;
+        end
+
+    function uimenu_showfilename(varargin)
+        h = gco;
+        if isempty(h) || ~ishandle(h)
+            return
+        end
+        ud = get(h, 'userdata');
+        fn = '';
+        if isstruct(ud)
+            if isfield(ud, 'fn') && ~isempty(ud.fn)
+                fn = ud.fn;
+            elseif isfield(ud, 'Tag') && ~isempty(ud.Tag)
+                fn = ud.Tag;
+            end
+            if ~isempty(fn) && isfield(ud, 'path') && ~isempty(ud.path)
+                fn = fullfile(ud.path, fn);
+            end
+        end
+        if isempty(fn)
+            fn = get(h, 'Tag');
+        end
+        if iscell(fn)
+            fn = fn{1};
+        end
+        if ischar(fn)
+            fprintf('Filename: %s\n', fn);
+        end
         
     function uimenu_setback(varargin)
         %hFigSAXSLee = findall(0,'Tag','SAXSLee_Fig');

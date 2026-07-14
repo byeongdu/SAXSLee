@@ -11,8 +11,8 @@ else
 end
 Ndata = size(fnc, 1);
 scan = cell(Ndata,1);
-OLD = 'SAXS\Averaged\S';
-NEW = 'Log\L';
+OLD = ['SAXS' filesep 'Averaged' filesep 'S'];
+NEW = ['Log' filesep 'L'];
 OLDext = '.dat';
 Newext = '.meta';
 for iSelection=1:Ndata

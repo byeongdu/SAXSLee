@@ -272,7 +272,7 @@ end
 function peakfit_help(varargin)
     test = questdlg('What would you like to do?','Help','Go to Youtube','Cancel','Go to Youtube');
     if strcmp(test,'Go to Youtube')
-        dos(['start https://www.youtube.com/channel/UCIVnZD6PKyJU4UNXOPeTviQ']);
+        web('https://www.youtube.com/channel/UCIVnZD6PKyJU4UNXOPeTviQ', '-browser');
     end
 end
 
@@ -986,7 +986,7 @@ function drawVoigtPeaks(varargin)
         else
             wd = meanFWHM;
         end
-        area = myd*wd;
+        area = myd*wd/2;
         if iscell(q)
             qv = q{i};
         else
@@ -1209,121 +1209,136 @@ end
                 fprintf('%i peaks are coupled for fitting.\n', numel(h));
         end
     end
+    function [meanFWHM, peakcenter] = get_peakwidth(h)
+        FWHM = zeros(size(h));
+        peakcenter = zeros(size(h));
+        for i=1:numel(h)
+            ud = get(h(i), 'userdata');
+            peakcenter(i) = ud(1);
+            if numel(ud) > 1
+                FWHM(i) = abs(ud(3)-ud(2));
+            end
+        end
+        minimumpeakdist = min(abs(diff(peakcenter)));
+        meanFWHM = mean(FWHM(FWHM>0));
+        if meanFWHM > minimumpeakdist*2/3
+            meanFWHM = minimumpeakdist*2/3;
+        end
 
-function out = generatebackground(varargin)
-    Np_default = 25;
-    hA1 = findobj(gcbf, 'tag', 'IqAxes');
-    hA2 = findobj(gcbf, 'tag', 'PeakAxes');
-    if numel(varargin) == 2
-        delete(findobj(hA1, 'tag', 'sim_back'));
-        delete(findobj(hA2, 'tag', 'backsubdata'));
-        h = findobj(hA1, 'tag', 'foundpeaks');
-    elseif numel(varargin) == 1
-        h = varargin{1};
     end
-    q = get(findobj(hA1, 'tag', 'rawdata'), 'xdata');
-    y = get(findobj(hA1, 'tag', 'rawdata'), 'ydata');
-    q = q(:);y = y(:);y0 = y;
-    q0 = q;
-    FWHM = [];
-    for i=1:numel(h)
-        ud = get(h(i), 'userdata');
-        if numel(ud) > 1
-            FWHM = [FWHM, abs(ud(3)-ud(2))];
+
+    function out = generatebackground(varargin)
+        op = getappdata(gcbf, 'peakfitoption');
+        Np_default = op.Ndatapoints;
+        
+        hA1 = findobj(gcbf, 'tag', 'IqAxes');
+        hA2 = findobj(gcbf, 'tag', 'PeakAxes');
+        if numel(varargin) == 2
+            delete(findobj(hA1, 'tag', 'sim_back'));
+            delete(findobj(hA2, 'tag', 'backsubdata'));
+            h = findobj(hA1, 'tag', 'foundpeaks');
+        elseif numel(varargin) == 1
+            h = varargin{1};
         end
-    end
-    meanFWHM = mean(FWHM);
-    goodpix = zeros(size(q));
-    q_sel = [];
-    Iq_sel = [];
-    ispeakwidthdefined = 0;
-    out = [];
-    for i=1:numel(h)
-        ud = get(h(i), 'userdata');
-        %yd = max(get(h(i), 'Ydata'));
-        if numel(ud)>1
-            wd = abs(ud(3)-ud(2));
-            ispeakwidthdefined = 1;
-        else
+        q = get(findobj(hA1, 'tag', 'rawdata'), 'xdata');
+        y = get(findobj(hA1, 'tag', 'rawdata'), 'ydata');
+        q = q(:);y = y(:);y0 = y;
+        dq = q(Np_default)-q(1);
+        q0 = q;
+        [meanFWHM, peakcenter] = get_peakwidth(h);
+    
+    
+        goodpix = zeros(size(q));
+        q_sel = [];
+        Iq_sel = [];
+        ispeakwidthdefined = 0;
+        out = [];
+        for i=1:numel(h)
+            ud = get(h(i), 'userdata');
+            %yd = max(get(h(i), 'Ydata'));
+            %if numel(ud)>1
+            %    wd = abs(ud(3)-ud(2));
+            %    ispeakwidthdefined = 1;
+            %else
             wd = meanFWHM;
-        end
-        if isnan(wd)
-%             fprintf('Determine lower and upper boundaries for at least a peak by shift left clicks with SET PEAKS mode.\n');
-%             return
-            Np = [];
-            op = getappdata(gcbf, 'peakfitoption');
-            if isempty(op)
-                Np = Np_default;
+            %end
+            if isnan(wd)
+    % %             fprintf('Determine lower and upper boundaries for at least a peak by shift left clicks with SET PEAKS mode.\n');
+    % %             return
+    %             Np = [];
+    %             op = getappdata(gcbf, 'peakfitoption');
+    %             if isempty(op)
+    %                 Np = Np_default;
+    %             else
+    %                 if isfield(op, 'Ndatapoints')
+    %                     Np = op.Ndatapoints;
+    %                 end
+    %             end
+    %             if isempty(Np)
+    %                 Np = Np_default;
+    %             end
+    %             fprintf('Default number of peak points %i is used.\n', Np);
+                wd = [];
+            end
+            if ~isempty(wd)
+                wd = abs(wd/1.5);
+                tl = (q > ud(1)-wd);
+                tr = (q < ud(1)+wd);
+                t = tl&tr;
             else
-                if isfield(op, 'Ndatapoints')
-                    Np = op.Ndatapoints;
-                end
+                [~, iqp] = min(abs(q-ud(1)));
+                tl = q > q(iqp-fix((op.Ndatapoints-1)/2));
+                tr = q < q(iqp+fix((op.Ndatapoints-1)/2));
+                t = tl&tr;
+                ispeakwidthdefined = 1;
             end
-            if isempty(Np)
-                Np = Np_default;
+            if ~ispeakwidthdefined
+                qs = q(t);
+                ys = y(t);
+    %             P = polyfit([qs(1), qs(end)],[ys(1), ys(end)],1);
+                [P, x1, x2] = optimum_background(qs, ys);
+                qs = qs(x1:x2);
+                ys = ys(x1:x2);
+                ytemp = ys - (P(1)*qs+P(2));
+                % finding minima and connect two minima....
+                [~, mi] = min(abs(qs-ud(1)));
+                [~, m1] = min(ytemp(1:mi));
+                [~, m2] = min(ytemp(mi:end));
+                qss = qs(m1:(mi+m2-1));
+                yss = ys(m1:(mi+m2-1));
+                t = isnan(yss);
+                yss(t) = [];
+                qss(t) = [];
+                ispeakwidthdefined = 1;
+            else
+                qss = q(t);
+                yss = y(t);
+                t = isnan(yss);
+                yss(t) = [];
+                qss(t) = [];
             end
-            fprintf('Default number of peak points %i is used.\n', Np);
-            wd = [];
+            %P = polyfit([qss(1), qss(end)],[yss(1), yss(end)],1);
+            [P, x1, x2] = optimum_background(qss, yss);
+            qss = qss(x1:x2);
+            yss = yss(x1:x2);
+            hp = line(hA2, 'xdata', qss, 'ydata', yss, 'color', 'r');
+            set(hp, 'tag', 'backsubdata');
+            setappdata(h(i), 'childrenhandle', hp);
+            setappdata(hp, 'foundpeak_handle', h(i));
+            setappdata(hp, 'back', P);
+            set(hp, 'userdata', ud);
+            out{i} = hp;
         end
-        if ~isempty(wd)
-            wd = abs(wd/1.5);
-            tl = (q > ud(1)-wd);
-            tr = (q < ud(1)+wd);
-            t = tl&tr;
-        else
-            [~, iqp] = min(abs(q-ud(1)));
-            tl = q > q(iqp-fix((op.Ndatapoints-1)/2));
-            tr = q < q(iqp+fix((op.Ndatapoints-1)/2));
-            t = tl&tr;
-            ispeakwidthdefined = 1;
+        fprintf('%i peaks are selected.\n', numel(h));
+        fprintf('In order to group them to fit, set "peak2fitgroup" array. For example, \n');
+        fprintf('When there is 5 peaks, of which you like to group 1 and 2 together and 4 and 5 together:\n');
+        fprintf(', and you do not want to fit the third one:\n');
+        fprintf('peak2fitgroup = [1, 1, 0, 4, 4]\n');
+        if numel(varargin) == 0
+            set(hA2, 'buttondownfcn', @btndownfn_backsubdata);
         end
-        if ~ispeakwidthdefined
-            qs = q(t);
-            ys = y(t);
-%             P = polyfit([qs(1), qs(end)],[ys(1), ys(end)],1);
-            [P, x1, x2] = optimum_background(qs, ys);
-            qs = qs(x1:x2);
-            ys = ys(x1:x2);
-            ytemp = ys - (P(1)*qs+P(2));
-            % finding minima and connect two minima....
-            [~, mi] = min(abs(qs-ud(1)));
-            [~, m1] = min(ytemp(1:mi));
-            [~, m2] = min(ytemp(mi:end));
-            qss = qs(m1:(mi+m2-1));
-            yss = ys(m1:(mi+m2-1));
-            t = isnan(yss);
-            yss(t) = [];
-            qss(t) = [];
-            ispeakwidthdefined = 1;
-        else
-            qss = q(t);
-            yss = y(t);
-            t = isnan(yss);
-            yss(t) = [];
-            qss(t) = [];
-        end
-        %P = polyfit([qss(1), qss(end)],[yss(1), yss(end)],1);
-        [P, x1, x2] = optimum_background(qss, yss);
-        qss = qss(x1:x2);
-        yss = yss(x1:x2);
-        hp = line(hA2, 'xdata', qss, 'ydata', yss, 'color', 'r');
-        set(hp, 'tag', 'backsubdata');
-        setappdata(h(i), 'childrenhandle', hp);
-        setappdata(hp, 'foundpeak_handle', h(i));
-        setappdata(hp, 'back', P);
-        set(hp, 'userdata', ud);
-        out{i} = hp;
+    %    drawVoigtPeaks
     end
-    fprintf('%i peaks are selected.\n', numel(h));
-    fprintf('In order to group them to fit, set "peak2fitgroup" array. For example, \n');
-    fprintf('When there is 5 peaks, of which you like to group 1 and 2 together and 4 and 5 together:\n');
-    fprintf(', and you do not want to fit the third one:\n');
-    fprintf('peak2fitgroup = [1, 1, 0, 4, 4]\n');
-    if numel(varargin) == 0
-        set(hA2, 'buttondownfcn', @btndownfn_backsubdata);
-    end
-%    drawVoigtPeaks
-end
     function [P, x1min, x2min] = optimum_background(xd, yd)
         Nx = numel(xd);
         N1 = fix(Nx/2)-3;
@@ -1629,6 +1644,7 @@ function fitPeaks(varargin)
     h = h(ind); % h is sorted by the peak center value.
     ht = ht(ind, :);
     
+    [meanFWHM, peakcenter] = get_peakwidth(h);
 
     % if the axis is zoomm in, then only peak in the zoom will be used.
     t = (ht(:, 3) < xl(1)) | (ht(:,3) > xl(2));
@@ -1756,8 +1772,8 @@ function fitPeaks(varargin)
                         centerLB = ud(2);
                         centerUB = ud(2);
                 end
-                LB = [LB, ud(1)*0.00001, centerLB, abs(ud(3:end-2))*0.0001];
-                UB = [UB, ud(1)*100, centerUB, abs(ud(3:end-2))*100];
+                LB = [LB, ud(1)*0.001, centerLB, abs(ud(3:end-2))*0.2];
+                UB = [UB, ud(1)*100, centerUB, abs(ud(3:end-2))*5];
 %            end
             fit.fitlineh(k) = hIq;
 %            fit.simlineh(k) = htt(ht(peak(k)), 1);
@@ -1917,12 +1933,13 @@ function fitPeaks(varargin)
         % The result is saved back to 'userdata' in outfunPF function
         for k=1:numel(peak)
             hIq = getappdata(h(peak(k)), 'sim_Iq_handleA2');
-            if fit.NdataSet == 1
-                setappdata(hIq, 'fit', dt); % this line is no need.
-            else
-                setappdata(hIq, 'fit', dt); % this line is no need.
-%                setappdata(hIq, 'fit', dt(i, :)); % this line is no need.
-            end
+            setappdata(hIq, 'fit', dt);
+%             if fit.NdataSet == 1
+%                 setappdata(hIq, 'fit', dt); % this line is no need.
+%             else
+%                 setappdata(hIq, 'fit', dt); % this line is no need.
+% %                setappdata(hIq, 'fit', dt(i, :)); % this line is no need.
+%             end
         end
 %        res = [res; INLP, a];
         fprintf('%i / %i is done.\n', i-1+numel(peak), numel(h));

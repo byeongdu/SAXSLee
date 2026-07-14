@@ -715,6 +715,11 @@ set(hAxes,...
 function SAXSLee_CreateFcn(varargin)
 hObject = varargin{1};
 hFigSAXSLee = hObject;
+try
+    evalin('base','clear SAXSLee_Handle setall settings refscan');
+catch
+end
+setappdata(hFigSAXSLee,'setall',{});
 settings.wavelength = 1.024755735383;
 settings.footprintAngle     = 0.5;              % incident side footprint angle
 settings.footprintAngleSC   = 0.5;              % detector side footprint angle
@@ -752,9 +757,9 @@ delete(h);
 hSAXSLeetimerMonitor   = timerfindall('Tag','SAXSLeetimerMonitor');
 delete(hSAXSLeetimerMonitor);
 try
-    evalin('caller',['clear ','SAXSLee_Handle']);
-    evalin('caller',['clear ','setall']);
-    evalin('caller',['clear ','settings']);
+    evalin('base','clear SAXSLee_Handle setall settings refscan');
+    evalin('caller','clear SAXSLee_Handle setall settings refscan');
+    setappdata(hFigSAXSLee,'setall',{});
 catch
     disp('No SAXSLee_Handle is found in any workspace')
 end
@@ -943,7 +948,7 @@ curvelegend(hFigSAXSLee);
 function SAXSLee_Help(varargin)
 test = questdlg('What would you like to do?','Help','Go to Youtube','Cancel','Go to Youtube');
 if strcmp(test,'Go to Youtube')
-    dos(['start https://www.youtube.com/channel/UCIVnZD6PKyJU4UNXOPeTviQ']);
+    web('https://www.youtube.com/channel/UCIVnZD6PKyJU4UNXOPeTviQ', '-browser');
 end
 
 

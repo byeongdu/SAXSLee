@@ -6,12 +6,20 @@ prePath = pwd;
 hFigSAXSLee = evalin('base', 'SAXSLee_Handle');
 settings = getappdata(hFigSAXSLee,'settings');
 Nsel = get(findobj(hFigSAXSLee, 'tag', 'SAXSLee_PopupmenuX'), 'value');
-%setall = getappdata(hFigSAXSLee, 'setall');
+setall = getappdata(hFigSAXSLee, 'setall');
+if isempty(setall)
+    try
+        setall = evalin('base', 'setall');
+    catch
+        setall = {};
+    end
+end
+if ~iscell(setall)
+    setall = {};
+end
 try
-    setall = evalin('base', 'setall');
     specfile = setall{Nsel}.file;
 catch
-    setall = {};
     specfile = '';
 end
 %setall = getappdata(hFigSAXSLee, 'setall');
@@ -213,7 +221,7 @@ end
 
 
 mm = pwd;
-m = strfind(filesep, mm);
+m = strfind(mm, filesep);
 if numel(m) > 1
     m = [m,numel(mm)+1];
     pth = mm(1:m(1)-1);
@@ -222,7 +230,7 @@ else
 end
 
 for i=2:numel(m)
-    pth = strcat(pth, '\\', mm(m(i-1)+1:m(i)-1));
+    pth = strcat(pth, filesep, mm(m(i-1)+1:m(i)-1));
 end
 
 qpath = 1;
@@ -240,6 +248,11 @@ if qpath == 1
 end
 
 settings.path = pth;
+if isfield(settings, 'atBeamline') && ~isempty(settings.atBeamline)
+    setall{Nsel}.settings.atBeamline = settings.atBeamline;
+else
+    setall{Nsel}.settings.atBeamline = '';
+end
 setall{Nsel}.scan = scan;
 setall{Nsel}.settings = settings;
 
